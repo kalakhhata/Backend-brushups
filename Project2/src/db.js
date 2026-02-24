@@ -1,23 +1,22 @@
-import {DatabaseSync} from 'node:sqlite'
-const db = new DatabaseSync(':memory:')
+// src/db.js
+import Database from 'better-sqlite3';
 
-//Excecute SQL statements from strings
+const db = new Database('database.sqlite'); // persistent file
 db.exec(`
-    CREATE TABLE user (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT
-    )
-    `)
-
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    password TEXT
+  )
+`);
 db.exec(`
-    CREATE TABLE todos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        task TEXT,
-        completed BOOLEAN DEFAULT 0,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-    `)    
+  CREATE TABLE IF NOT EXISTS todos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    task TEXT,
+    completed BOOLEAN DEFAULT 0,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+  )
+`);
 
-        export default db
+export default db;
