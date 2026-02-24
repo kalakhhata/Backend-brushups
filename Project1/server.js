@@ -14,14 +14,19 @@ app.get('/',(req,res)=>{
         <body>
         <h1>DATA</h1>
             <p>${JSON.stringify(data)}</p>
-            
+            <a href='/dashboard'>Dashboard</a>
         </body>
+        <script>console.log('this is script')</script>
         `)
 
 })
 
 app.get('/dashboard',(req,res)=>{
-    res.send("<h1>Dashboard</h1>")
+    res.send(`<body>
+        
+        <h1>Dashboard</h1>
+        <a href='/'>Home</a>
+        </body>`)
 
 })
 
@@ -29,7 +34,7 @@ app.get('/dashboard',(req,res)=>{
 
 app.get('/api/data',(req,res)=>{
     console.log('This is for data api')
-    res.send(data)
+    res.statusCode(201).send(data)
 })
 
 app.post('/api/data',(req,res)=>{
