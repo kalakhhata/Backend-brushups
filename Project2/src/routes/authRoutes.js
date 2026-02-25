@@ -8,28 +8,54 @@ const router = express.Router()
 
 //Register a new user endpoint /auth/register
 router.post('/register', async (req,res)=>{
-const {username,password} = req.body
-const hashedPassword = await bcrypt.hash(password,10)
-// save the new user and hashed password to the db
-try{
-    const insertUser = db.prepare(`INSERT INTO users (username,password) VALUES (  ?,?)`)
-    const result = insertUser.run(username,hashedPassword)
+    const {username,password} = req.body
+    const hashedPassword = await bcrypt.hash(password,10)
 
-    // now that we have the user , I want to create a first todo for the user
-    const defaultTodo = 'Welcome to your todo list!'
-    const insertTodo = db.prepare(`INSERT INTO todos (user_id,task) VALUES (?,?)`)
-    insertTodo.run(result.lastInsertrowid,defaultTodo)
+    try{
+        const insertUser = db.prepare(`INSERT INTO users (username,password) VALUES (?,?)`)
+        const result = insertUser.run(username, hashedPassword)
 
-    // create a JWT token for the user
-    const token = jwt.sign({id: result.lastInsertrowid},process.env.JWT_SECRET,{expiresIn:'24h'})
-    res.json({token})
+        // default todo
+        const defaultTodo = 'Welcome to your todo list!'
+        const insertTodo = db.prepare(`INSERT INTO todos (user_id, task) VALUES (?,?)`)
+        insertTodo.run(result.lastInsertRowid, defaultTodo)  // ✅ fixed
 
-}catch(err) {
-    console.error(err)
-    res.sendStatus(503)
-}
+        // JWT token
+        const token = jwt.sign({id: result.lastInsertRowid}, process.env.JWT_SECRET, {expiresIn: '24h'})
+        res.json({token})
+
+    }catch(err){
+        console.error(err)
+        res.sendStatus(503)
+    }
 })
 
-router.post('/login',(req,res)=>{})
+router.post('/login',(req,res)=>{
+    const {username,password}= req.body
+
+    try{
+        const getUser = db.prepare(`SELECT * FROM users WHERE username = ?`)
+        const user = getUser.get(username)
+        //if the user does not exist, return an error
+        if (!user){
+            return res.status(404).send('user not found')
+        }
+
+        const passwordMatch = bcrypt.compare(password,user.password)
+        //if the password does not match, return an error
+        if (!passwordMatch){
+            return res.status(401).send('invalid password')
+
+        }
+
+        // then we have successfully authenticated the user, we can create a JWT token for them
+        const token = jwt.sign({id: user.id},process.env.JWT_SECRET,{expiresIn:'24h'})
+        res.json({token})  
+    }
+    catch(err){
+     console.lon(err.message)
+     res.sendStatus(503)
+    }
+})
 
 export default router
